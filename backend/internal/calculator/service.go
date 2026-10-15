@@ -18,9 +18,9 @@ const (
 
 // Errores de dominio
 var (
-	ErrDivisionByZero  = errors.New("division por cero no está permitida")
-	ErrNegativeSqrt    = errors.New("no se puede calcular la raíz cuadrada de un número negativo")
-	ErrInvalidOperator = errors.New("operador no válido o no soportado")
+	ErrDivisionByZero  = errors.New("La división por cero no está definida.")
+	ErrNegativeSqrt    = errors.New("No se puede calcular la raíz cuadrada de un número negativo.")
+	ErrInvalidOperator = errors.New("Operador no válido o no soportado.")
 )
 
 // CalculatorService contiene la interfaz y métodos de cálculo
