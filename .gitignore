@@ -1,0 +1,15 @@
+# Go
+backend/sezzle-calculator
+backend/coverage.out
+backend/vendor/
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+
+# Entorno / IDEs
+.env
+.DS_Store
+.vscode/
+.idea/
