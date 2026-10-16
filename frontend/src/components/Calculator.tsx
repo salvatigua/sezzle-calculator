@@ -8,7 +8,10 @@ export const Calculator: React.FC = () => {
   const [operator, setOperator] = useState<Operator | null>(null);
   const [waitingForOperandB, setWaitingForOperandB] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Mantenemos loading interno y showLoadingVisual para la UI
   const [loading, setLoading] = useState<boolean>(false);
+  const [showLoadingVisual, setShowLoadingVisual] = useState<boolean>(false);
 
   const handleDigit = (digit: string) => {
     setError(null);
@@ -54,50 +57,65 @@ export const Calculator: React.FC = () => {
     setWaitingForOperandB(true);
   };
 
-  const executeSingleOperandOp = async (op: Operator, val: number) => {
+  // Helper para ejecutar llamadas asíncronas con retraso en el indicador visual
+  const runAsyncCalculation = async (calcFn: () => Promise<void>) => {
     setLoading(true);
     setError(null);
+
+    // Solo mostramos "Calculando..." si la petición tarda más de 300ms
+    const timer = setTimeout(() => {
+      setShowLoadingVisual(true);
+    }, 300);
+
     try {
-      const res = await calculate({ operator: op, a: val });
-      setDisplay(String(res));
-      setOperandA(res);
-      setWaitingForOperandB(true);
-    } catch (err: any) {
-      setError(err.message || 'Error de cálculo');
+      await calcFn();
     } finally {
+      clearTimeout(timer);
       setLoading(false);
+      setShowLoadingVisual(false);
     }
   };
 
-  const handleEquals = async () => {
-    if (operator === null || operandA === null) return;
+  const executeSingleOperandOp = (op: Operator, val: number) => {
+    runAsyncCalculation(async () => {
+      try {
+        const res = await calculate({ operator: op, a: val });
+        setDisplay(String(res));
+        setOperandA(res);
+        setWaitingForOperandB(true);
+      } catch (err: any) {
+        setError(err.message || 'Error de cálculo');
+      }
+    });
+  };
+
+  const handleEquals = () => {
+    if (operator === null || operandA === null || loading) return;
 
     const operandB = parseFloat(display);
-    setLoading(true);
-    setError(null);
 
-    try {
-      const result = await calculate({
-        operator,
-        a: operandA,
-        b: operandB,
-      });
-      setDisplay(String(result));
-      setOperandA(result);
-      setOperator(null);
-      setWaitingForOperandB(true);
-    } catch (err: any) {
-      setError(err.message || 'Error de cálculo');
-    } finally {
-      setLoading(false);
-    }
+    runAsyncCalculation(async () => {
+      try {
+        const result = await calculate({
+          operator,
+          a: operandA,
+          b: operandB,
+        });
+        setDisplay(String(result));
+        setOperandA(result);
+        setOperator(null);
+        setWaitingForOperandB(true);
+      } catch (err: any) {
+        setError(err.message || 'Error de cálculo');
+      }
+    });
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-xl border border-gray-100">
       <h1 className="text-2xl font-bold !text-gray-900 text-center mb-4">
         Sezzle Fullstack Calculator
-        </h1>
+      </h1>
 
       {/* Display */}
       <div className="bg-gray-900 text-white p-4 rounded-xl text-right mb-4 min-h-[80px] flex flex-col justify-center">
@@ -105,16 +123,16 @@ export const Calculator: React.FC = () => {
           {operandA !== null && operator && `${operandA} ${operator}`}
         </div>
         <div className="text-3xl font-mono overflow-x-auto">
-          {loading ? 'Calculando...' : display}
+          {showLoadingVisual ? 'Calculando...' : display}
         </div>
       </div>
 
       {/* Alerta de Error */}
-    {error && (
-    <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-md text-sm font-medium">
-        <p>{error}</p>
-    </div>
-    )}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-md text-sm font-medium">
+          <p>{error}</p>
+        </div>
+      )}
 
       {/* Teclado */}
       <div className="grid grid-cols-4 gap-2">
